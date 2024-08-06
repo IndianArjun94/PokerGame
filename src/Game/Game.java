@@ -18,6 +18,8 @@ public class Game implements Runnable {
     public int pot = 0;
     public int bettingRound = 0;
 
+    public Thread bettingThread = new Thread(this);
+
     public Game() {
 //        Deal cards for player & computer
         playerCards[0] = newRandomCard();
@@ -41,10 +43,26 @@ public class Game implements Runnable {
         }
 
         bettingRound++;
+
+        bettingThread.start();
+
+        bettingRound++;
+
+        bettingThread.start();
+
+        bettingRound++;
+
+        bettingThread.start();
+
+        bettingRound++;
+
+        bettingThread.start();
+
+        gameOver();
     }
 
-    private int checkPairs(int[] list) {
-        int number = list[0];
+    private int checkPairs(int[] list, boolean threeOfAKind) {
+        int number;
         int length = list.length;
         int pairs = 0;
 
@@ -71,7 +89,9 @@ public class Game implements Runnable {
             value = 2;
         } if (bettingRound >= 2) {
             int[] listOfCards = {computerCards[0].rank(), computerCards[1].rank(), communityCards[0].rank(), communityCards[1].rank(), communityCards[2].rank()};
-//            if (checkPairs())
+            if (checkPairs(listOfCards, false) == 1) { // One Pair
+
+            }
         }
 
         return value;
@@ -137,5 +157,9 @@ public class Game implements Runnable {
                 }
             }
         }
+    }
+
+    public void gameOver() {
+//        TODO Game Over
     }
 }
