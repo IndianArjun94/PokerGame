@@ -1,5 +1,6 @@
 package Game;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
@@ -61,18 +62,30 @@ public class Game implements Runnable {
         gameOver();
     }
 
-    private int checkPairs(int[] list, boolean threeOfAKind) {
+    private int checkPairs(Card[] list, boolean threeOfAKind) {
         int number;
         int length = list.length;
         int pairs = 0;
+        int streak = 0;
 
         for (int i = 0; i < length; i++) {
-            number = list[i];
-            list[i] = 100;
+            number = list[i].rank();
+            list[i].rank(100);
 
-            for (int currentNumber : list) {
-                if (number == currentNumber) {
-                    pairs++;
+            for (Card currentCard : list) {
+                if (number == currentCard.rank()) {
+                    if (threeOfAKind) {
+                        if (streak == 1) {
+                            pairs++;
+                            streak = 0;
+                            break;
+                        } else {
+                            streak++;
+                        }
+                    } else {
+                        pairs++;
+                        break;
+                    }
                 }
             }
         }
@@ -88,9 +101,58 @@ public class Game implements Runnable {
         } if (computerCards[0].rank() == computerCards[1].rank()) { // One Pair
             value = 2;
         } if (bettingRound >= 2) {
-            int[] listOfCards = {computerCards[0].rank(), computerCards[1].rank(), communityCards[0].rank(), communityCards[1].rank(), communityCards[2].rank()};
-            if (checkPairs(listOfCards, false) == 1) { // One Pair
+            Card[] listOfCards = new Card[0];
 
+            if (bettingRound == 2) {
+                listOfCards = new Card[]{computerCards[0], computerCards[1], communityCards[0], communityCards[1], communityCards[2]};
+            } else if (bettingRound == 3) {
+                listOfCards = new Card[]{computerCards[0], computerCards[1], communityCards[0], communityCards[1], communityCards[2], communityCards[3]};
+            } else if (bettingRound == 4) {
+                listOfCards = new Card[]{computerCards[0], computerCards[1], communityCards[0], communityCards[1], communityCards[2], communityCards[3], communityCards[4]};
+            }
+
+            if (checkPairs(listOfCards, false) == 1) { // One Pair
+                value = 2;
+            } if (checkPairs(listOfCards, false) == 2) { // Two Pair
+                value = 3;
+            } if (checkPairs(listOfCards, true) >= 1) { // Three Pair
+                value = 4;
+            } if (checkPairs(listOfCards, false) >= 1 && checkPairs(listOfCards, true) >= 1) {
+                value = 7;
+            }
+
+            if (bettingRound >= 3) {
+                int streak = 0;
+                int prev = listOfCards[0].suit();
+                int[] list = new int[listOfCards.length];
+                int i = 0;
+                for (Card card : listOfCards) {
+                    if (card.suit() == prev) {
+                        streak++;
+                    }
+                    prev = card.suit();
+                    list[i] = card.rank();
+                    i++;
+                }
+
+                if (streak >= 5) { // Flush
+                    value = 6;
+                }
+
+                Arrays.sort(list);
+                int prevElement = 0;
+                int straight = 2;
+                for (int element : list) {
+                    if (prevElement == element && straight != 0) {
+                        straight = 1;
+                    } else {
+                        straight = 0;
+                    }
+                }
+
+                if (straight == 1) { // Straight
+                    value = 5;
+                }
             }
         }
 
