@@ -1,5 +1,6 @@
 package Game;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Random;
@@ -59,7 +60,33 @@ public class Game implements Runnable {
 
         bettingThread.start();
 
-        gameOver();
+//        gameOver();
+    }
+
+    private boolean fourOfAKind(Card[] list) {
+        int number;
+        int length = list.length;
+        int streak = 0;
+        boolean win = false;
+
+        for (int i = 0; i < length; i++) {
+            number = list[i].rank();
+            list[i].rank(100);
+
+            for (Card currentCard : list) {
+                if (number == currentCard.rank()) {
+                    if (streak == 2) {
+                        win = true;
+                        streak = 0;
+                        break;
+                    } else {
+                        streak++;
+                    }
+                }
+            }
+        }
+
+        return win;
     }
 
     private int checkPairs(Card[] list, boolean threeOfAKind) {
@@ -151,8 +178,31 @@ public class Game implements Runnable {
                 }
 
                 if (straight == 1) { // Straight
-                    value = 5;
+                    if (value == 6) {
+                        value = 9;
+                    } else {
+                        value = 5;
+                    }
                 }
+
+                if (checkPairs(listOfCards, false) >= 1 && checkPairs(listOfCards, true) >= 1) { // Full House
+                    value = 7;
+                }
+
+                if (fourOfAKind(listOfCards)) { // Four Of A Kind
+                    value = 8;
+                }
+
+                ArrayList<Integer> arrayList = new ArrayList<>();
+
+                for (int asd : list) {
+                    arrayList.add(asd);
+                }
+
+                if (value == 6 && arrayList.contains(10) && arrayList.contains(1) && arrayList.contains(12) && arrayList.contains(13) && arrayList.contains(1)) {
+                    value = 10;
+                }
+
             }
         }
 
@@ -193,35 +243,96 @@ public class Game implements Runnable {
         notify();
     }
 
+    public synchronized void computerBet(int value) {
+        computerBetAmount = computerBetAmount + value;
+        pot = playerBetAmount + computerBetAmount;
+    }
+
     @Override
     public void run()  {
-        boolean bettingNotOver = false;
-        if (isPlayerBigBlind) {
-            while (!bettingNotOver) {
+        boolean bettingOver = false;
+        boolean checkProposed = false;
+        boolean firstTimeBetting = true;
+        int playerPreviousBet;
+        int howMuchPlayerBet = 0;
+
+        if (!isPlayerBigBlind) { // Player is small blind, they bet first
+            while (!bettingOver) {
 //                Waiting for player to bet
+                playerPreviousBet = playerBetAmount;
+
                 try {
-                    wait();
+                    bettingThread.wait();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
 
+                howMuchPlayerBet = playerBetAmount - playerPreviousBet;
+
 //                TODO Computer Betting code goes here
+                int computerCardsValue = getComputerCardsValue() * 10;
+                int computerConfidence = computerCardsValue - howMuchPlayerBet;
+
+                if (playerBetAmount == 0 && checkProposed) {
+                    bettingOver = true;
+                } else {
+                    if (computerConfidence < 1) { // Fold
+                        gameOver("player");
+                    } else if (computerConfidence < 6) { // Match
+                        computerBet(playerBetAmount - computerBetAmount);
+                        if (checkProposed) {
+                            bettingOver = true;
+                        } else {
+                            checkProposed = true;
+                        }
+                    } else { // Raise
+                        computerBet((int) (computerConfidence * 1.5));
+                    }
+                }
             }
         } else {
-            while (!bettingNotOver) {
+            while (!bettingOver) {
 //                TODO Computer Betting code goes here
+                if (!firstTimeBetting) {
+                    int computerCardsValue = getComputerCardsValue() * 10;
+                    int computerConfidence = computerCardsValue - howMuchPlayerBet;
+
+                    if (playerBetAmount == 0 && checkProposed) {
+                        bettingOver = true;
+                    } else {
+                        if (computerConfidence < 1) { // Fold
+                            gameOver("player");
+                        } else if (computerConfidence < 6) { // Match
+                            computerBet(playerBetAmount - computerBetAmount);
+                            if (checkProposed) {
+                                bettingOver = true;
+                            } else {
+                                checkProposed = true;
+                            }
+                        } else { // Raise
+                            computerBet((int) (computerConfidence * 1.5));
+                        }
+                    }
+                } else {
+                    computerBet((int) (getComputerCardsValue() * 1.5));
+                    firstTimeBetting = false;
+                }
 
 //                Waiting for player to bet
+                playerPreviousBet = playerBetAmount;
+
                 try {
-                    wait();
+                    bettingThread.wait();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+
+                howMuchPlayerBet = playerBetAmount - playerPreviousBet;
             }
         }
     }
 
-    public void gameOver() {
+    public void gameOver(String winner) {
 //        TODO Game Over
     }
 }
