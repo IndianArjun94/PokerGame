@@ -7,5 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="joml-1.10.7-sources" level="project" />
+    <orderEntry type="library" name="gdx-liftoff-1.12.1.12" level="project" />
   </component>
 </module>

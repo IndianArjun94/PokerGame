@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="gdx-liftoff-1.12.1.12">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/libs/gdx-liftoff-1.12.1.12.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
